@@ -1,0 +1,17 @@
+os.loadAPI("web")
+
+function waitForRun()
+  while true do
+    local response = web.dequeueRun()
+    if response ~= nil and response ~= "" then return response end
+    os.sleep(5)
+  end
+end
+
+while true do
+  print("poll v1.0")
+  print("ID " .. os.getComputerID())
+  local input = waitForRun()
+  print("Got input " .. input)
+  shell.run(input)
+end

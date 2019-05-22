@@ -1,0 +1,36 @@
+function forward()
+  local attempts = 0
+  while true do
+    if turtle.forward() then return true end
+    if turtle.getFuelLevel() == 0 then return false end
+    if attempts > 10 then return false end
+    attempts = attempts + 1
+    os.sleep(1)
+    local a,b = turtle.inspect()
+    if a == false or b.name ~= "ComputerCraft:CC-Turtle" then
+      turtle.dig()
+    end
+  end
+end
+
+args = {...}
+
+if args[1] == "left" or args[1] == "l" then
+  turtle.turnLeft()
+elseif args[1] == "right" or args[1] == "r" then
+  turtle.turnRight()
+else
+  print("First argument must be left or right")
+  return
+end
+
+local length = tonumber(args[2])
+for i = 1,length do
+  if not forward() then print("Unable to move") break end
+end
+
+if args[1] == "left" or args[1] == "l" then
+  turtle.turnRight()
+elseif args[1] == "right" or args[1] == "r" then
+  turtle.turnLeft()
+end

@@ -1,0 +1,37 @@
+function dequeueRun(id)
+  local data = "id="
+  if id==nil then
+    data = data..os.getComputerID()
+  else
+    data = data..id
+  end
+  local handle = http.post("http://localhost:3000/dequeueRun", data)
+  if handle == nil then return nil end
+  return handle.readAll()
+end
+
+function enqueueRun(id, program, args)
+  local data = "id="
+  if id==nil then
+    data = data..os.getComputerID()
+  else
+    data = data..id
+  end
+  data = data.."&program="..program
+  data = data.."&args="..args
+  local handle = http.post("http://localhost:3000/enqueueRun", data)
+  return handle ~= nil and handle.readAll() == "ACK"
+end
+
+function writeFile(name, text)
+  local data = "filename="..name
+  data = data.."&data="..text
+  local handle = http.post("http://localhost:3000/writeFile", data)
+  return handle ~= nil and handle.readAll() == "ACK"
+end
+
+function readFile(name)
+  local handle = http.get("http://localhost:3000/"..name)
+  if handle == nil then return nil end
+  return handle.readAll()
+end

@@ -1,0 +1,73 @@
+function clearOutput()
+  redstone.setAnalogOutput("front", 0)
+  redstone.setAnalogOutput("back", 0)
+  redstone.setAnalogOutput("left", 0)
+  redstone.setAnalogOutput("right", 0)
+  redstone.setAnalogOutput("top", 0)
+  redstone.setAnalogOutput("bottom", 0)
+end
+
+function getInput()
+  while true do
+    local input=redstone.getAnalogInput("back")
+    if input ~= 0 then return input end
+    os.sleep(2)
+  end
+end
+
+function respond()
+  redstone.setAnalogOutput("back", 1)
+end
+
+function copyPrograms()
+  local programs=fs.list("disk")
+  for i=1,#programs do
+    local dest = "new"..programs[i]
+    if fs.exists(dest) then
+      fs.delete(dest)
+    end
+    local source=fs.combine("disk",programs[i])
+    print("Copy from " .. source .. " to " .. dest)
+    fs.copy(source,dest)
+  end
+end
+
+function tryBack(tryNumber)
+  if turtle.back() then return true end
+  if turtle.getFuelLevel() == 0 then
+    turtle.turnRight()
+    turtle.turnRight()
+    print("Out of fuel")
+    return
+  end
+  tryNumber = tryNumber + 1
+  if tryNumber == 3 then return false end
+  os.sleep(2)
+  return tryBack(tryNumber)
+end
+
+while true do
+print("Waiting for input")
+clearOutput()
+local input = getInput()
+
+print("Got input " .. input)
+respond()
+
+if input == 1 then
+  os.sleep(2)
+  print("Updating")
+  tryBack(0)
+  os.sleep(2)
+  copyPrograms()
+  turtle.forward()
+  os.sleep(1)
+  os.reboot()
+end
+if input == 2 then
+  os.sleep(4)
+  shell.run("mine")
+  os.sleep()
+  os.reboot()
+end
+end

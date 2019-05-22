@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <h3>Get run</h3>
+    <form action='dequeueRun' method="POST">
+      ID
+      <input type="text" name="id"/>
+      <button type="submit" formmethod="POST">
+        Submit
+      </button>
+    </form>
+
+    <h3>Set run</h3>
+    <form action='enqueueRun' method="POST">
+      ID
+      <input type='text' name="id"/>
+      <br/>
+      Program
+      <input type='text' name="program"/>
+      <br/>
+      Args
+      <input type='text' name="args"/>
+      <br/>
+      <button type="submit">
+        Submit 
+      </button>
+    </form>
+  </body>
+</html>

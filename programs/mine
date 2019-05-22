@@ -1,0 +1,88 @@
+x = 0
+
+function checkSlot(i, name)
+  local item = turtle.getItemDetail(i)
+  return item and item["name"] == name
+end
+
+function placeTorch()
+  print("Calling placeTorch()")
+  for i = 1,16 do
+    if checkSlot(i, "minecraft:torch") then
+      local slot = turtle.getSelectedSlot()
+      turtle.select(i)
+      turtle.placeDown()
+      turtle.select(slot)
+    end
+  end   
+end
+
+function checkFuel()
+  if turtle.getFuelLevel() < x + 10 then
+    print("Searching inventory for coal")
+    for i = 1,16 do
+      if checkSlot(i, "minecraft:coal") then
+        local slot = turtle.getSelectedSlot()
+        turtle.select(i)
+        turtle.refuel()
+        turtle.select(slot)
+      end
+    end
+  end
+end
+
+function column()
+  if (x+4) % 9 == 0 then
+    placeTorch()
+  end
+  x = x + 1
+  while not turtle.forward() do
+    checkFuel()
+    turtle.dig()
+  end
+  while turtle.detectUp() do
+    turtle.digUp()
+  end
+  turtle.digDown()
+end
+
+function full()
+  for i=1,16 do
+    if not turtle.getItemDetail(i) then return false end
+  end
+  return true
+end
+
+function dropCobble()
+  if not full() then return end
+  for i = 1,16 do
+    if checkSlot(i, "minecraft:cobblestone") then
+      local slot = turtle.getSelectedSlot()
+      turtle.select(i)
+      turtle.dropDown()
+      turtle.select(slot) 
+    end
+  end
+end
+
+checkFuel()
+turtle.up()
+while turtle.getFuelLevel() > x + 10 and not full() do
+  column()
+  dropCobble()
+end
+
+print("Running out of space or fuel.. returning")
+
+turtle.turnRight()
+turtle.turnRight()
+
+for i = 1,x do
+  while not turtle.forward() do
+    turtle.dig()
+  end
+end
+
+turtle.down()
+turtle.turnRight()
+turtle.turnRight()

@@ -1,0 +1,12 @@
+local args = {...}
+local filename = args[1]
+local data = web.readFile(filename)
+
+local dest = "new"..filename
+if fs.exists(dest) then
+  fs.delete(dest)
+end
+
+local handle = fs.open(dest, 'w')
+handle.write(data)
+handle.close()
