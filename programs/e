@@ -1,0 +1,14 @@
+-- Error API
+function post(message, pause)
+    pause = pause or false
+    print(message)
+    if pause then
+        print ("Hit enter to continue")
+        while true do
+            local event, key = os.pullEvent( "key" )
+            if key == keys.enter then
+                return
+            end
+        end
+    end
+end

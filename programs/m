@@ -1,0 +1,334 @@
+-- Movement API
+os.loadAPI("e")
+saveLocation = "save/position"
+checkFuel = nil
+ 
+-- The X value, corresponding to east (X-) and west (X+)
+x = 0
+-- The Y value, corresponding to up and down
+y = 0
+-- The Z value, corresponding to north (Z-) and south (Z+)
+z = 0
+-- The heading value, corresponding to North, West, South, East
+-- With 0, 1, 2, 3 accordingly
+h = 0
+ 
+function load()
+  print('Loading position')
+  if fs.exists(saveLocation) then
+    local file = fs.open(saveLocation, "r")
+    x = tonumber(file.readLine())
+    y = tonumber(file.readLine())
+    z = tonumber(file.readLine())
+    h = tonumber(file.readLine())
+    file.close()
+    return true
+  else
+    print('Unable to find save file')
+    return false
+  end
+end
+ 
+-- Initialize the movement API to have the following x,y,z and heading values
+-- Can be called with optional parameters, and the corresponding value will
+-- default to 0
+function init(inx,iny,inz,inh)
+  load()
+  x = inx or x or 0
+  y = iny or x or 0
+  z = inz or z or 0
+  h = inh or h or 0
+  print('Initiated to: '..x..', '..y..', '..z..', '..h)
+end
+ 
+function save()
+  local file = fs.open(saveLocation, "w")
+  file.writeLine(x)
+  file.writeLine(y)
+  file.writeLine(z)
+  file.writeLine(h)
+  file.close()
+end
+ 
+-- Turn the turtle left and modify the heading value accordingly
+function left()
+  turtle.turnLeft()
+  h = (h + 1) % 4
+  save()
+end
+ 
+-- Turn the turtle right and modify the heading value accordingly
+function right()
+  turtle.turnRight()
+  h = (h - 1) % 4
+  save()
+end
+ 
+-- Turn the turtle around and modify the heading value accordingly
+.turnAround = function()
+  left()
+  left()
+end
+ 
+setCallback = function(func)
+  checkFuel = func
+end
+ 
+-- Move the turtle forward one, block digging if necessary and force is specified
+function forward(force)
+  force = force or false
+  if checkFuel then checkFuel() end
+  local result = turtle.forward()
+  if force and not result then
+    -- Check to see if the block is diggable
+    local digResult = turtle.dig()
+    if not digResult then
+      e.post("Block not diggable")
+      return false
+    else
+      -- If so, then keep digging til we're done  (in case of falling blocks)
+      while turtle.detect() do
+        turtle.dig()
+        os.sleep(.5)
+      end
+    end
+    result = turtle.forward()
+  end
+  if result then
+    if h == 0 then
+      z = z - 1
+    elseif h == 1 then
+      x = x - 1
+    elseif h == 2 then
+      z = z + 1
+    else
+      x = x + 1
+    end
+    save()
+  end
+  return result
+end
+ 
+-- Move the turtle back one block, turning and digging if necessary and force is specified
+function back(force)
+    force = force or false
+    if checkFuel then checkFuel() end
+    local result = turtle.back()
+    if force and not result then
+      turnAround()
+      -- Check to see if the block is diggable
+      local digResult = turtle.dig()
+      if not digResult then
+        e.post("Block not diggable")
+        turnAround()
+        return false
+      else
+        -- If so, then keep digging til we're done (in case of falling blocks)
+        while turtle.detect() do
+          turtle.dig()
+          os.sleep(.5)
+        end
+      end
+      result = turtle.back()
+      turnAround()
+    end
+    if result then
+      if h == 0 then
+        z = z + 1
+      elseif h == 1 then
+        x = x + 1
+      elseif h == 2 then
+        z = z - 1
+      else
+        x = x - 1
+      end
+      save()
+    end
+    return result
+end
+ 
+-- Move the turtle up one block, digging if necessary and force is specified
+function up(force)
+    force = force or false
+    if checkFuel then checkFuel() end
+    local result = turtle.up()
+    if force and not result then
+      -- Check to see if the block is diggable
+      local digResult = turtle.digUp()
+      if not digResult then
+        e.post("Block above not diggable")
+        return false
+      else
+        -- If so, then keep digging til we're done  (in case of falling blocks)
+        while turtle.detectUp() do
+          turtle.digUp()
+        end
+      end
+      result = turtle.up()
+    end
+    if result then
+      y = y + 1
+      save()
+    end
+    return result
+end
+ 
+-- Move the turtle down one block, digging if necessary and force is specified
+function down(force)
+  force = force or false
+  if checkFuel then checkFuel() end
+  local result = turtle.down()
+  if force and not result then
+    -- Check to see if the block is diggable
+    local digResult = turtle.digDown()
+    if not digResult then
+      e.post("Block below not diggable")
+      return false
+    end
+    result = turtle.down()
+  end
+  if result then
+    y = y - 1
+    save()
+  end
+  return result
+end
+ 
+-- Turns to the specified heading
+function turnTo(heading)
+  local o = (heading - h) % 4
+  if
+    o == 1 then left() elseif
+    o == 2 then turnAround() elseif
+    o == 3 then right()
+  end
+end
+ 
+-- Move towards the x provided, digging if necessary and force is specified
+function gotoX(inx, force)
+  force = force or false
+  if x < inx then
+    turnTo(1)    
+  elseif x > inx then
+    turnTo(3)
+  end
+  while x ~= inx do
+    if not forward(force) then
+      return false
+    end
+  end
+  return true
+end
+ 
+-- Move toward the y provided, digging if necessary and force is specified
+function gotoY(iny, force)
+  force = force or false  
+  while y > iny do
+    if not down(force) then
+      return false
+    end
+  end
+  while y < iny do
+    if not up(force) then
+      return false
+    end
+  end
+  return true
+end
+ 
+-- Move toward the z provided, digging if necessary and force is specified
+function gotoZ(inz, force)
+  force = force or false
+  if z > inz then
+    turnTo(0)
+  elseif z < inz then
+    turnTo(2)
+  end
+  while z ~= inz do
+    if not forward(force) then
+      return false
+    end
+  end
+  return true
+end
+ 
+-- Calculate the distance among all axes to the destination point
+function snakeDistance(inx, iny, inz)
+  dx = math.abs(x - inx)
+  dy = math.abs(y - iny)
+  dz = math.abs(z - inz)
+  return dx + dy + dz
+end
+ 
+function gotoXY(inx, iny, force)
+  if not gotoX(inx, force) then return false end
+  if not gotoY(iny, force) then return false end
+  return true
+end
+function gotoXZ(inx, inz, force)
+  if not gotoX(inx, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  return true
+end
+ 
+function gotoYX(iny, inx, force)
+  if not gotoY(iny, force) then return false end
+  if not gotoX(inx, force) then return false end
+  return true
+end
+function gotoYZ(iny, inz, force)
+  if not gotoY(iny, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  return true
+end
+ 
+function gotoZX(inz, inx, force)
+  if not gotoZ(inz, force) then return false end
+  if not gotoX(inx, force) then return false end
+  return true
+end
+function gotoZY(inz, iny, force)
+  if not gotoZ(inz, force) then return false end
+  if not gotoY(iny, force) then return false end
+  return true
+end
+ 
+ 
+function gotoXYZ(inx,iny,inz,force)
+  if not gotoX(inx, force) then return false end
+  if not gotoY(iny, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  return true
+end
+function gotoXZY(inx, inz, iny, force)
+  if not gotoX(inx, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  if not gotoY(iny, force) then return false end
+  return true
+end
+ 
+function gotoYXZ(iny, inx, inz, force)
+  if not gotoY(iny, force) then return false end
+  if not gotoX(inx, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  return true
+end
+function gotoYZX(iny, inz, inx, force)
+  if not gotoY(iny, force) then return false end
+  if not gotoZ(inz, force) then return false end
+  if not gotoX(inx, force) then return false end
+  return true
+end
+ 
+function gotoZXY(inz, inx, iny, force)
+  if not gotoZ(inz, force) then return false end
+  if not gotoX(inx, force) then return false end
+  if not gotoY(iny, force) then return false end
+  return true
+end
+function gotoZYX(inz, iny, inx, force)
+  if not gotoZ(inz, force) then return false end
+  if not gotoY(iny, force) then return false end
+  if not gotoX(inx, force) then return false end
+  return true
+end

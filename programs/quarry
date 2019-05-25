@@ -1,0 +1,81 @@
+-- Quarry
+-- Args:
+--  h - number of blocks high to mine
+--  l - number of blocks long to mine
+
+local args = {...}
+local h = args[1] or 51
+local l = args[1] or 160
+
+os.loadAPI("m")
+m.init(0,0,0,1) -- Forward is X+
+
+local function goHome()
+  m.gotoXY(0,0)
+end
+
+local function placeEnderChest()
+  while turtle.detect() do
+    turtle.dig()
+    os.sleep(.5)
+  end
+  for i=1,16 do
+    if turtle.getItemCount() > 0 then 
+      info = turtle.getItemDetail(i)
+        if info["name"] == "EnderStorage:enderChest" then
+          turtle.select(i)
+          turtle.place()
+        end
+    end
+  end
+end
+
+local function dropAll()
+  if turtle.detect() then
+    for i=1,16 do
+      if turtle.getItemCount(i) > 0 then
+        turtle.select(i)
+        dropSelectedItem()
+      end
+    end
+  end
+end
+
+local function dropSelectedItem()
+  while not turtle.drop() do
+    -- Wait for extraction
+    sleep(1)
+  end
+end
+
+local function emptyInventory()
+  placeEnderChest()
+  dropAll()
+end
+
+local function digUpDown()
+    -- Always dig blocks around edges of area
+    local forceDig = x <= 2 or length - x <= 2
+    local a,b = turtle.inspectUp()
+    if a and ignoreBlocks[b["name"]] == nil then
+        turtle.digUp()
+    end
+    a,b = turtle.inspectDown()
+    if a and ignoreBlocks[b["name"]] == nil then
+        turtle.digDown()
+    end
+end
+
+local function loadIgnoreBlocks()
+    ignoreBlocks = {}
+    if not fs.exists(ignoreLocation) then
+        print("There is no IgnoreBlocks file, please run the teach program first")
+        return
+    end
+    file = fs.open(ignoreLocation,"r")
+    while true do
+        text = file.readLine()
+        if text == nil then break end
+        ignoreBlocks[text] = true
+    end
+end
